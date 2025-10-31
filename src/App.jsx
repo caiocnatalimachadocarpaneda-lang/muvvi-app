@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+// import { GoogleMap, useLoadScript } from '@react-google-maps/api'; // <-- REMOVIDO: Esta biblioteca não é suportada no preview
 import {
     Home, Briefcase, Menu, Bell, ArrowLeft, X, CreditCard, Leaf, HelpCircle, Settings, LogOut,
     ChevronRight, Check, Search, Phone, MessageSquare, Shield,
@@ -25,6 +26,32 @@ const MuvviTheme = {
     blue: '#007AFF',
     dark: '#1E1E1E',
 };
+
+// --- Configuração do Google Maps ---
+// REMOVIDO: apiKey, libraries, mapStyles - Não são usados pelo iframe embed
+
+const mapCenter = { lat: -20.3155, lng: -40.3128 }; // Centro de Vitória, ES
+
+// --- Componente de Mapa Reutilizável (Versão <iframe>) ---
+const MapComponent = () => {
+    // URL de embed do Google Maps. Usamos o centro de Vitória.
+    // O estilo escuro não pode ser aplicado via JSON, então usamos o mapa padrão.
+    const mapEmbedSrc = `https://maps.google.com/maps?q=${mapCenter.lat},${mapCenter.lng}&t=&z=14&ie=UTF8&iwloc=&output=embed`;
+
+    return (
+        <iframe
+            src={mapEmbedSrc}
+            width="100%"
+            height="100%"
+            style={{ border: 0 }}
+            allowFullScreen=""
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            title="Muvvi Map"
+        ></iframe>
+    );
+};
+
 
 // --- Componentes de Tela ---
 
@@ -261,16 +288,11 @@ const HomeScreen = ({ setScreen }) => (
             </button>
         </header>
         
-        {/* Mapa Falso */}
-        <div className="flex-grow bg-gray-700 flex items-center justify-center relative">
-            <p className="text-gray-400">Simulação de Mapa</p>
-            {/* Linhas de Mapa Falsas */}
-            <svg className="absolute w-full h-full" strokeOpacity="0.3">
-                <line x1="10%" y1="10%" x2="90%" y2="90%" stroke="#007AFF" strokeWidth="2" />
-                <line x1="10%" y1="90%" x2="90%" y2="10%" stroke="#007AFF" strokeWidth="1" />
-                <circle cx="50%" cy="50%" r="30" stroke="#007AFF" strokeWidth="2" fill="none" />
-            </svg>
+        {/* === MAPA REAL (iFrame) === */}
+        <div className="flex-grow bg-gray-700">
+            <MapComponent />
         </div>
+        {/* === FIM MAPA REAL === */}
 
         {/* Painel Inferior */}
         <div className="bg-muvvi-dark p-6 rounded-t-2xl shadow-lg relative -mt-4 z-10">
@@ -317,10 +339,11 @@ const SearchScreen = ({ setScreen }) => (
             />
         </header>
         
-        {/* Mapa Falso */}
-        <div className="flex-grow bg-gray-700 flex items-center justify-center">
-            <p className="text-gray-400">Simulação de Mapa de Busca</p>
+        {/* === MAPA REAL (iFrame) === */}
+        <div className="flex-grow bg-gray-700">
+             <MapComponent />
         </div>
+        {/* === FIM MAPA REAL === */}
 
         {/* Lista de Sugestões (Simulada) */}
         <div className="bg-muvvi-dark p-4">
@@ -348,13 +371,14 @@ const SelectRideScreen = ({ setScreen }) => {
 
     return (
         <div className="w-full h-full flex flex-col bg-muvvi-dark-gray">
-            {/* Mapa Falso */}
-            <div className="h-1/3 bg-gray-700 flex items-center justify-center relative">
-                <p className="text-gray-400">Rota no Mapa</p>
+            {/* === MAPA REAL (iFrame) === */}
+            <div className="h-1/3 bg-gray-700 relative">
+                 <MapComponent />
                 <button onClick={() => setScreen('search')} className="absolute top-4 left-4 p-2 bg-muvvi-dark rounded-full">
                     <ArrowLeft size={24} />
                 </button>
             </div>
+            {/* === FIM MAPA REAL === */}
             
             {/* Painel de Seleção */}
             <div className="flex-grow bg-muvvi-dark p-6 rounded-t-2xl shadow-lg relative -mt-4 z-10 animate-slideUp">
@@ -445,16 +469,14 @@ const TripScreen = ({ setScreen }) => {
                 </div>
             )}
             
-            {/* Mapa Falso */}
-            <div className="h-2/3 bg-gray-700 flex items-center justify-center relative">
-                <p className="text-gray-400">Viagem em Andamento...</p>
-                <svg className="absolute w-full h-full" strokeOpacity="0.5">
-                    <path d="M 20 80 Q 150 20 300 100" stroke="#007AFF" strokeWidth="4" fill="none" strokeDasharray="10 5" />
-                </svg>
+            {/* === MAPA REAL (iFrame) === */}
+            <div className="h-2/3 bg-gray-700 relative">
+                <MapComponent />
                 <button onClick={() => setScreen('home')} className="absolute top-4 left-4 p-2 bg-muvvi-dark rounded-full">
                     <ArrowLeft size={24} />
                 </button>
             </div>
+            {/* === FIM MAPA REAL === */}
             
             {/* Painel Inferior */}
             <div className="flex-grow bg-muvvi-dark p-6 rounded-t-2xl shadow-lg relative -mt-4 z-10 animate-slideUp">
@@ -1216,6 +1238,11 @@ function App() {
     const isAuthenticated = currentUser !== null;
     // --- FIM DO ESTADO GLOBAL ---
 
+    // --- Carregador do Google Maps (REMOVIDO) ---
+    // const { isLoaded, loadError } = useLoadScript({ ... });
+    // --- FIM do Carregador ---
+
+
     // Simula a tela de splash
     useEffect(() => {
         if (screen === 'splash') {
@@ -1227,8 +1254,8 @@ function App() {
     }, [screen]);
 
     const renderScreen = () => {
-        
-        // Telas públicas
+
+        // Telas que não dependem do mapa (Login, Splash)
         if (screen === 'splash') {
             return <SplashScreen />;
         }
@@ -1238,9 +1265,14 @@ function App() {
         if (screen === 'register') {
             return <RegisterScreen setScreen={setScreen} users={users} setUsers={setUsers} setCurrentUser={setCurrentUser} />;
         }
+        
+        // --- Telas que DEPENDEM do mapa ---
+        
+        // REMOVIDO: Verificação de loadError e isLoaded
+        // O iframe carrega sozinho.
 
         // Telas privadas (Exigem autenticação)
-        if (isAuthenticated) {
+        if (isAuthenticated) { // REMOVIDO: && isLoaded
             switch (screen) {
                 case 'home':
                     return <HomeScreen setScreen={setScreen} />;
@@ -1290,10 +1322,6 @@ function App() {
             }
         } else {
             // Se não estiver autenticado, força o login
-            // A SplashScreen já transitou, então mostramos o Login
-            if (screen === 'splash') {
-                return <SplashScreen />; // Continua mostrando o splash se ainda estiver no tempo
-            }
             return <LoginScreen setScreen={setScreen} users={users} setCurrentUser={setCurrentUser} />;
         }
     };
