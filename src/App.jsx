@@ -52,3 +52,4 @@ const SplashScreen = ({ setScreen }) => {
 };
 
 // ... (rest of the App.jsx code)
+export default App;
