@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
-// import { GoogleMap, useLoadScript } from '@react-google-maps/api'; // <-- REMOVIDO: Esta biblioteca não é suportada no preview
+import React, { useState, useEffect, useRef } from 'react';
+// REMOVIDO: A biblioteca @react-google-maps/api não é suportada neste ambiente de preview.
+// Vamos reverter para o <iframe> para fazer o código compilar aqui.
+// import { GoogleMap, useLoadScript, Marker, DirectionsRenderer, Autocomplete } from '@react-google-maps/api'; 
 import {
     Home, Briefcase, Menu, Bell, ArrowLeft, X, CreditCard, Leaf, HelpCircle, Settings, LogOut,
     ChevronRight, Check, Search, Phone, MessageSquare, Shield,
@@ -7,7 +9,8 @@ import {
     Users, Bike, Car, CheckCircle2, Share2,
     Trash2, Dot,
     Circle,
-    Banknote
+    Banknote,
+    MapPin, Clock
 } from 'lucide-react';
 
 // --- Constantes e Dados ---
@@ -28,14 +31,15 @@ const MuvviTheme = {
 };
 
 // --- Configuração do Google Maps ---
-// REMOVIDO: apiKey, libraries, mapStyles - Não são usados pelo iframe embed
-
+// REVERTIDO PARA O MÉTODO <iframe>
 const mapCenter = { lat: -20.3155, lng: -40.3128 }; // Centro de Vitória, ES
+
+// REMOVIDO: apiKey, libraries, mapStyles, passengerPosition, driverPosition
+
 
 // --- Componente de Mapa Reutilizável (Versão <iframe>) ---
 const MapComponent = () => {
     // URL de embed do Google Maps. Usamos o centro de Vitória.
-    // O estilo escuro não pode ser aplicado via JSON, então usamos o mapa padrão.
     const mapEmbedSrc = `https://maps.google.com/maps?q=${mapCenter.lat},${mapCenter.lng}&t=&z=14&ie=UTF8&iwloc=&output=embed`;
 
     return (
@@ -43,7 +47,8 @@ const MapComponent = () => {
             src={mapEmbedSrc}
             width="100%"
             height="100%"
-            style={{ border: 0 }}
+            // Adiciona um filtro CSS para simular o modo escuro
+            style={{ border: 0, filter: 'invert(90%) hue-rotate(180deg)' }} 
             allowFullScreen=""
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
@@ -288,11 +293,11 @@ const HomeScreen = ({ setScreen }) => (
             </button>
         </header>
         
-        {/* === MAPA REAL (iFrame) === */}
+        {/* === MAPA (iFrame) === */}
         <div className="flex-grow bg-gray-700">
             <MapComponent />
         </div>
-        {/* === FIM MAPA REAL === */}
+        {/* === FIM MAPA === */}
 
         {/* Painel Inferior */}
         <div className="bg-muvvi-dark p-6 rounded-t-2xl shadow-lg relative -mt-4 z-10">
@@ -305,14 +310,26 @@ const HomeScreen = ({ setScreen }) => (
             
             <div className="flex space-x-4">
                 <button 
-                    onClick={() => setScreen('select-ride')}
+                    onClick={() => {
+                        const routeData = {
+                            origin: "Minha Localização",
+                            destination: "Shopping Vitória",
+                        };
+                        setScreen('select-ride', routeData);
+                    }}
                     className="flex-1 bg-muvvi-dark-gray p-4 rounded-lg flex items-center space-x-3"
                 >
                     <Home size={20} />
                     <span>Casa</span>
                 </button>
                 <button 
-                    onClick={() => setScreen('select-ride')}
+                    onClick={() => {
+                        const routeData = {
+                            origin: "Minha Localização",
+                            destination: "Aeroporto de Vitória (VIX)",
+                        };
+                        setScreen('select-ride', routeData);
+                    }}
                     className="flex-1 bg-muvvi-dark-gray p-4 rounded-lg flex items-center space-x-3"
                 >
                     <Briefcase size={20} />
@@ -323,66 +340,113 @@ const HomeScreen = ({ setScreen }) => (
     </div>
 );
 
-// 5. Search Destination Screen
-const SearchScreen = ({ setScreen }) => (
-    <div className="w-full h-full flex flex-col bg-muvvi-dark-gray">
-        {/* Header */}
-        <header className="p-4 flex items-center space-x-4 bg-muvvi-dark">
-            <button onClick={() => setScreen('home')} className="text-white">
-                <ArrowLeft size={24} />
-            </button>
-            <input 
-                type="text" 
-                placeholder="Digite seu destino..." 
-                className="flex-grow p-3 bg-muvvi-dark-gray rounded-lg border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-muvvi-blue" 
-                autoFocus 
-            />
-        </header>
-        
-        {/* === MAPA REAL (iFrame) === */}
-        <div className="flex-grow bg-gray-700">
-             <MapComponent />
-        </div>
-        {/* === FIM MAPA REAL === */}
+// 5. Search Destination Screen (REVERTIDA PARA VERSÃO SIMPLES)
+const SearchScreen = ({ setScreen }) => {
+    
+    // REVERTIDO: Removemos a lógica de Autocomplete e cálculo de rotas
+    // para fazer o preview funcionar.
 
-        {/* Lista de Sugestões (Simulada) */}
-        <div className="bg-muvvi-dark p-4">
-            <button 
-                onClick={() => setScreen('select-ride')}
-                className="w-full text-left p-4 hover:bg-muvvi-dark-gray rounded-lg"
-            >
-                <h3 className="font-semibold">Shopping Vitória</h3>
-                <p className="text-sm text-gray-400">Av. Américo Buaiz, 200 - Enseada do Suá</p>
-            </button>
-            <button 
-                onClick={() => setScreen('select-ride')}
-                className="w-full text-left p-4 hover:bg-muvvi-dark-gray rounded-lg"
-            >
-                <h3 className="font-semibold">Aeroporto de Vitória (VIX)</h3>
-                <p className="text-sm text-gray-400">Av. Roza Helena Schorling Albuquerque</p>
-            </button>
-        </div>
-    </div>
-);
+    // Locais recentes (Simulados)
+    const recentPlaces = [
+        { name: 'Shopping Vitória', address: 'Av. Américo Buaiz, 200 - Enseada do Suá' },
+        { name: 'Aeroporto de Vitória (VIX)', address: 'Av. Roza Helena Schorling Albuquerque' },
+    ];
+    
+    // Simula a escolha de um destino e avança
+    const handleSelectDestination = (destinationName) => {
+        const routeData = {
+            origin: "Minha Localização",
+            destination: destinationName,
+        };
+        setScreen('select-ride', routeData);
+    };
 
-// 6. Select Ride Screen
-const SelectRideScreen = ({ setScreen }) => {
+    return (
+        <div className="w-full h-full flex flex-col bg-muvvi-dark">
+            {/* Header com os campos de Partida e Destino */}
+            <header className="p-4 bg-muvvi-dark z-10 shadow-lg">
+                <div className="flex items-center space-x-3">
+                    <button onClick={() => setScreen('home')} className="text-white">
+                        <ArrowLeft size={24} />
+                    </button>
+                    {/* Campos de Partida e Destino (Simulados) */}
+                    <div className="flex-grow space-y-3">
+                        {/* Campo de Partida */}
+                        <div className="relative flex items-center w-full">
+                            <MapPin size={18} className="text-muvvi-blue absolute left-3" />
+                            <input 
+                                type="text" 
+                                placeholder="Local de Partida" 
+                                defaultValue="Minha Localização"
+                                className="w-full p-3 pl-10 bg-muvvi-dark-gray rounded-lg border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-muvvi-blue" 
+                            />
+                        </div>
+                        
+                        {/* Campo de Destino */}
+                         <div className="relative flex items-center w-full">
+                            <MapPin size={18} className="text-red-500 absolute left-3" />
+                            <input 
+                                type="text" 
+                                placeholder="Para onde vamos?" 
+                                className="w-full p-3 pl-10 bg-muvvi-dark-gray rounded-lg border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-muvvi-blue" 
+                                autoFocus
+                            />
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            {/* === MAPA (iFrame) === */}
+            <div className="flex-grow bg-gray-700">
+                 <MapComponent />
+            </div>
+            {/* === FIM MAPA === */}
+
+            {/* Lista de Recentes */}
+            <div className="bg-muvvi-dark p-4 z-10 shadow-lg">
+                <h3 className="text-sm font-semibold text-gray-400 mb-3 ml-2">Locais Recentes</h3>
+                <div className="space-y-2 mb-4">
+                    {recentPlaces.map((place, index) => (
+                         <button 
+                            key={index}
+                            onClick={() => handleSelectDestination(place.name)}
+                            className="w-full flex items-center space-x-3 text-left p-3 hover:bg-muvvi-dark-gray rounded-lg"
+                        >
+                            <Clock size={20} className="text-gray-500" />
+                            <div>
+                                <h3 className="font-semibold">{place.name}</h3>
+                                <p className="text-sm text-gray-400">{place.address}</p>
+                            </div>
+                        </button>
+                    ))}
+                </div>
+                {/* Botão de confirmar removido, pois a seleção é instantânea */}
+            </div>
+        </div>
+    );
+};
+
+// 6. Select Ride Screen (REVERTIDA)
+const SelectRideScreen = ({ setScreen, routePayload }) => {
     const [selectedId, setSelectedId] = useState('go');
+    const destinationName = routePayload?.destination || "seu destino";
+
+    // REMOVIDO: useEffect para calcular rotas.
 
     return (
         <div className="w-full h-full flex flex-col bg-muvvi-dark-gray">
-            {/* === MAPA REAL (iFrame) === */}
+            {/* === MAPA (iFrame) === */}
             <div className="h-1/3 bg-gray-700 relative">
                  <MapComponent />
                 <button onClick={() => setScreen('search')} className="absolute top-4 left-4 p-2 bg-muvvi-dark rounded-full">
                     <ArrowLeft size={24} />
                 </button>
             </div>
-            {/* === FIM MAPA REAL === */}
+            {/* === FIM MAPA === */}
             
             {/* Painel de Seleção */}
             <div className="flex-grow bg-muvvi-dark p-6 rounded-t-2xl shadow-lg relative -mt-4 z-10 animate-slideUp">
-                <h2 className="text-xl font-bold mb-6 text-center">Escolha sua viagem</h2>
+                <h2 className="text-xl font-bold mb-6 text-center">Viagem para {destinationName}</h2>
                 
                 <div className="space-y-4 mb-6">
                     {rideOptionsData.map((ride) => {
@@ -392,7 +456,7 @@ const SelectRideScreen = ({ setScreen }) => {
                             <button 
                                 key={ride.id}
                                 onClick={() => setSelectedId(ride.id)}
-                                className={`w-full flex items-center space-x-4 p-4 rounded-lg border-2 ${isSelected ? 'border-muvvi-blue bg-muvvi-blue/20' : 'border-muvvi-dark-gray bg-muvvi-dark-gray'}`}
+                                className={`w-full flex items-center space-x-4 p-4 rounded-lg border-2 ${isSelected ? 'border-muvvi-blue bg-muvvi-blue-20' : 'border-muvvi-dark-gray bg-muvvi-dark-gray'}`}
                             >
                                 <RideIcon />
                                 <div className="flex-grow text-left">
@@ -408,7 +472,7 @@ const SelectRideScreen = ({ setScreen }) => {
                 </div>
                 
                 <button 
-                    onClick={() => setScreen('finding')}
+                    onClick={() => setScreen('finding', routePayload)} // Passa a rota para a próxima tela
                     className="w-full bg-muvvi-blue text-white font-bold py-4 rounded-lg shadow-lg hover:bg-blue-600 transition-colors"
                 >
                     Confirmar Muvvi {rideOptionsData.find(r => r.id === selectedId)?.name.split(' ')[1]}
@@ -452,13 +516,17 @@ const FindingScreen = ({ setScreen }) => {
 };
 
 // 8. Trip in Progress Screen
-const TripScreen = ({ setScreen }) => {
+const TripScreen = ({ setScreen, routePayload }) => {
     const [toastMessage, setToastMessage] = useState('');
+    
+    // REMOVIDO: Lógica de direções
 
     const showToast = (message, isError = false) => {
         setToastMessage({ text: message, error: isError });
         setTimeout(() => setToastMessage(''), 3000); // O toast desaparece após 3s
     };
+    
+    // REMOVIDO: useEffect para calcular rota
     
     return (
         <div className="w-full h-full flex flex-col bg-muvvi-dark-gray">
@@ -469,20 +537,20 @@ const TripScreen = ({ setScreen }) => {
                 </div>
             )}
             
-            {/* === MAPA REAL (iFrame) === */}
+            {/* === MAPA (iFrame) === */}
             <div className="h-2/3 bg-gray-700 relative">
                 <MapComponent />
                 <button onClick={() => setScreen('home')} className="absolute top-4 left-4 p-2 bg-muvvi-dark rounded-full">
                     <ArrowLeft size={24} />
                 </button>
             </div>
-            {/* === FIM MAPA REAL === */}
+            {/* === FIM MAPA === */}
             
             {/* Painel Inferior */}
             <div className="flex-grow bg-muvvi-dark p-6 rounded-t-2xl shadow-lg relative -mt-4 z-10 animate-slideUp">
                 <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-bold">Em viagem para Casa</h2>
-                    <p className="text-lg font-bold text-muvvi-blue">10:45</p>
+                    <h2 className="text-xl font-bold">Motorista a caminho</h2>
+                    <p className="text-lg font-bold text-muvvi-blue">3 min</p>
                 </div>
                 
                 {/* Info do Motorista */}
@@ -553,7 +621,7 @@ const NotificationsScreen = ({ setScreen }) => (
         {/* Lista de Notificações */}
         <div className="space-y-4">
             <div className="bg-muvvi-dark p-4 rounded-lg flex space-x-4">
-                <div className="p-2 bg-muvvi-blue/20 rounded-full h-fit">
+                <div className="p-2 bg-muvvi-blue-20 rounded-full h-fit">
                     <CheckCircle2 size={20} className="text-muvvi-blue" />
                 </div>
                 <div>
@@ -963,7 +1031,7 @@ const DarkModeScreen = ({ setScreen }) => {
     const OptionButton = ({ value, label, icon: Icon }) => (
         <button 
             onClick={() => setMode(value)}
-            className={`flex-1 flex flex-col items-center justify-center p-4 rounded-lg border-2 ${mode === value ? 'border-muvvi-blue bg-muvvi-blue/20' : 'border-muvvi-dark bg-muvvi-dark'}`}
+            className={`flex-1 flex flex-col items-center justify-center p-4 rounded-lg border-2 ${mode === value ? 'border-muvvi-blue bg-muvvi-blue-20' : 'border-muvvi-dark bg-muvvi-dark'}`}
         >
             <Icon size={24} className="mb-2" />
             <span className="font-semibold">{label}</span>
@@ -1231,6 +1299,7 @@ const AddPixScreen = ({ setScreen }) => (
 
 function App() {
     const [screen, setScreen] = useState('splash'); // 'splash', 'login', 'register', 'home', etc.
+    const [routePayload, setRoutePayload] = useState(null); // Armazena os detalhes da rota
     
     // --- ESTADO GLOBAL (Banco de dados e Autenticação simulados) ---
     const [users, setUsers] = useState([]); // Banco de dados de usuários
@@ -1241,6 +1310,12 @@ function App() {
     // --- Carregador do Google Maps (REMOVIDO) ---
     // const { isLoaded, loadError } = useLoadScript({ ... });
     // --- FIM do Carregador ---
+    
+    // Função de navegação que permite passar dados
+    const handleSetScreen = (screenName, payload = null) => {
+        setRoutePayload(payload);
+        setScreen(screenName);
+    };
 
 
     // Simula a tela de splash
@@ -1260,10 +1335,10 @@ function App() {
             return <SplashScreen />;
         }
         if (screen === 'login') {
-            return <LoginScreen setScreen={setScreen} users={users} setCurrentUser={setCurrentUser} />;
+            return <LoginScreen setScreen={handleSetScreen} users={users} setCurrentUser={setCurrentUser} />;
         }
         if (screen === 'register') {
-            return <RegisterScreen setScreen={setScreen} users={users} setUsers={setUsers} setCurrentUser={setCurrentUser} />;
+            return <RegisterScreen setScreen={handleSetScreen} users={users} setUsers={setUsers} setCurrentUser={setCurrentUser} />;
         }
         
         // --- Telas que DEPENDEM do mapa ---
@@ -1275,54 +1350,54 @@ function App() {
         if (isAuthenticated) { // REMOVIDO: && isLoaded
             switch (screen) {
                 case 'home':
-                    return <HomeScreen setScreen={setScreen} />;
+                    return <HomeScreen setScreen={handleSetScreen} />;
                 case 'search':
-                    return <SearchScreen setScreen={setScreen} />;
+                    return <SearchScreen setScreen={handleSetScreen} />; // Revertido para a versão simples
                 case 'select-ride':
-                    return <SelectRideScreen setScreen={setScreen} />;
+                    return <SelectRideScreen setScreen={handleSetScreen} routePayload={routePayload} />;
                 case 'finding':
-                    return <FindingScreen setScreen={setScreen} />;
+                    return <FindingScreen setScreen={handleSetScreen} />;
                 case 'trip':
-                    return <TripScreen setScreen={setScreen} />;
+                    return <TripScreen setScreen={handleSetScreen} routePayload={routePayload} />;
                 case 'notifications':
-                    return <NotificationsScreen setScreen={setScreen} />;
+                    return <NotificationsScreen setScreen={handleSetScreen} />;
                 case 'menu':
-                    return <MenuScreen setScreen={setScreen} currentUser={currentUser} setCurrentUser={setCurrentUser} />;
+                    return <MenuScreen setScreen={handleSetScreen} currentUser={currentUser} setCurrentUser={setCurrentUser} />;
                 case 'profile':
-                    return <ProfileScreen setScreen={setScreen} currentUser={currentUser} />;
+                    return <ProfileScreen setScreen={handleSetScreen} currentUser={currentUser} />;
                 case 'edit-profile':
-                    return <EditProfileScreen setScreen={setScreen} currentUser={currentUser} setCurrentUser={setCurrentUser} users={users} setUsers={setUsers} />;
+                    return <EditProfileScreen setScreen={handleSetScreen} currentUser={currentUser} setCurrentUser={setCurrentUser} users={users} setUsers={setUsers} />;
                 case 'payment':
-                    return <PaymentScreen setScreen={setScreen} currentUser={currentUser} setUsers={setUsers} />;
+                    return <PaymentScreen setScreen={handleSetScreen} currentUser={currentUser} setUsers={setUsers} />;
                 case 'add-payment':
-                    return <AddPaymentScreen setScreen={setScreen} />;
+                    return <AddPaymentScreen setScreen={handleSetScreen} />;
                 case 'add-card': 
-                    return <AddCardScreen setScreen={setScreen} />;
+                    return <AddCardScreen setScreen={handleSetScreen} />;
                 case 'add-pix':
-                    return <AddPixScreen setScreen={setScreen} />;
+                    return <AddPixScreen setScreen={handleSetScreen} />;
                 case 'green':
-                    return <MuvviGreenScreen setScreen={setScreen} />;
+                    return <MuvviGreenScreen setScreen={handleSetScreen} />;
                 case 'help':
-                    return <HelpScreen setScreen={setScreen} />;
+                    return <HelpScreen setScreen={handleSetScreen} />;
                 case 'settings':
-                    return <SettingsScreen setScreen={setScreen} />;
+                    return <SettingsScreen setScreen={handleSetScreen} />;
                 case 'dark-mode':
-                    return <DarkModeScreen setScreen={setScreen} />;
+                    return <DarkModeScreen setScreen={handleSetScreen} />;
                 case 'notifications-settings':
-                    return <NotificationsSettingsScreen setScreen={setScreen} />;
+                    return <NotificationsSettingsScreen setScreen={handleSetScreen} />;
                 case 'trusted-contacts':
-                    return <TrustedContactsScreen setScreen={setScreen} />;
+                    return <TrustedContactsScreen setScreen={handleSetScreen} />;
                 case 'add-contact': 
-                    return <AddContactScreen setScreen={setScreen} />;
+                    return <AddContactScreen setScreen={handleSetScreen} />;
                 case 'privacy':
-                    return <PrivacyScreen setScreen={setScreen} />;
+                    return <PrivacyScreen setScreen={handleSetScreen} />;
                 default:
                     // Se uma tela privada não for encontrada, volta para home
-                    return <HomeScreen setScreen={setScreen} />;
+                    return <HomeScreen setScreen={handleSetScreen} />;
             }
         } else {
             // Se não estiver autenticado, força o login
-            return <LoginScreen setScreen={setScreen} users={users} setCurrentUser={setCurrentUser} />;
+            return <LoginScreen setScreen={handleSetScreen} users={users} setCurrentUser={setCurrentUser} />;
         }
     };
 
@@ -1352,7 +1427,11 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
         .bg-muvvi-blue { background-color: #007AFF; }
         .border-muvvi-blue { border-color: #007AFF; }
         .ring-muvvi-blue { --tw-ring-color: #007AFF; }
-        .bg-muvvi-blue\\/20 { background-color: rgba(0, 122, 255, 0.2); }
+        
+        /* CORREÇÃO DO ERRO DE REGEX: 
+           Substituí 'bg-muvvi-blue\\/20' por 'bg-muvvi-blue-20' 
+        */
+        .bg-muvvi-blue-20 { background-color: rgba(0, 122, 255, 0.2); }
 
         @keyframes fadeIn {
             from { opacity: 0; }
