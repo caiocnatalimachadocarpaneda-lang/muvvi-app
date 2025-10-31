@@ -3,14 +3,14 @@ import {
     Home, Briefcase, Menu, Bell, ArrowLeft, X, CreditCard, Leaf, HelpCircle, Settings, LogOut,
     ChevronRight, Check, Search, Phone, MessageSquare, Shield,
     Edit2, Sun, Moon, Laptop,
-    Users, Bike, Car, CarFront, CheckCircle2, Share2
+  Users, Bike, Car, CheckCircle2, Share2
 } from 'lucide-react';
 
 const formatBRL = (cents) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cents / 100);
 
 const rideOptionsData = [
     { id: 'go', name: 'Muvvi Go', priceCents: 1850, time: '4 min', icon: () => <Car size={32} /> },
-    { id: 'comfort', name: 'Muvvi Comfort', priceCents: 2400, time: '5 min', icon: () => <CarFront size={32} /> },
+    { id: 'comfort', name: 'Muvvi Comfort', priceCents: 2400, time: '5 min', icon: () => <Car size={32} /> },
     { id: 'green', name: 'Muvvi Green', priceCents: 2350, time: '6 min', icon: () => <Leaf size={32} className="text-green-400" /> },
     { id: 'moto', name: 'Muvvi Moto', priceCents: 1200, time: '2 min', icon: () => <Bike size={32} /> },
     { id: 'share', name: 'Muvvi Share', priceCents: 1400, time: '7 min', icon: () => <Users size={32} /> }
